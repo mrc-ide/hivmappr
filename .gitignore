@@ -1,0 +1,10 @@
+inst/doc
+.Rproj.user
+.Rhistory
+.RData
+*~
+*.o
+*.so
+*/*cache/*
+src/stan_files/*rds
+src/stan_files/*hpp
