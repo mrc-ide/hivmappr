@@ -94,7 +94,7 @@ model {
   l_prev_est ~ normal(l_rho_i, l_prev_se);
 
   // ART data likelihood
-  target += log1p_exp(-l_rho_i) - log(alpha_i) - log1m(alpha_i); // propart -> l_alpha
+  target += log(prop_art_i) - log1m(alpha_i); // propart -> l_alpha
   l_alpha_i  ~ normal(l_alpha0, sigma_l_alpha);
 
   // ANC data likelihood
