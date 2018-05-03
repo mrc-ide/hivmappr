@@ -1,4 +1,4 @@
-nnnPackage: hivincid
+Package: hivincid
 Type: Package
 Title: Small-area estimation model for HIV incidence rate
 Version: 1.0.1
