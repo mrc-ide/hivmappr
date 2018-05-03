@@ -136,7 +136,7 @@ th <- list(theme_minimal(),
                  axis.ticks.y = element_line(),
                  axis.ticks.length = unit(2, "pt")))
 
-panA <- ggplot(data=samp[param == "rho_i" & model == "rita"],
+panA <- ggplot(data=samp[param == "rho_i"],
                aes(x=value, y=district, fill = ..x.. )) +
   geom_density_ridges_gradient(rel_min_height=0.01) +
   geom_vline(xintercept=0.10, color="grey20", linetype="dashed") +
@@ -146,7 +146,7 @@ panA <- ggplot(data=samp[param == "rho_i" & model == "rita"],
   labs(title="Prevalence (%)") +
   th + theme(axis.text.y=element_text(size=7, hjust=1))
 
-panB <- ggplot(data=samp[param == "alpha_i" & model == "rita"],
+panB <- ggplot(data=samp[param == "alpha_i"],
                aes(x=value, y=district, fill = ..x.. )) +
   geom_density_ridges_gradient(rel_min_height=0.01) +
   geom_vline(xintercept=0.51, color="grey20", linetype="dashed") +
@@ -156,7 +156,7 @@ panB <- ggplot(data=samp[param == "alpha_i" & model == "rita"],
   labs(title="ART Coverage (%)") +
   th
 
-panC <- ggplot(data=samp[param == "lambda_i" & model == "rita"],
+panC <- ggplot(data=samp[param == "lambda_i"],
        aes(x=value, y=district, fill = ..x.. )) +
   geom_density_ridges_gradient(rel_min_height=0.025) +
   geom_vline(xintercept=0.0036, color="grey20", linetype="dashed") +
@@ -168,7 +168,7 @@ panC <- ggplot(data=samp[param == "lambda_i" & model == "rita"],
   labs(title="Incidence / 1000 (log)") +
   th
 
-panD <- ggplot(data=samp[param == "infections_i" & model == "rita"],
+panD <- ggplot(data=samp[param == "infections_i"],
        aes(x=value, y=district, fill = ..x.. )) +
   geom_density_ridges_gradient(rel_min_height=0.025) +
   scale_x_log10(element_blank(), limits=c(50, 10000), labels=function(x) round(x)) +
