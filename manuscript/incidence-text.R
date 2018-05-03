@@ -3,6 +3,7 @@
 #' author: Jeffrey W Eaton, Sumali Bajaj, \textit{and others}
 #' output: 
 #'  pdf_document:
+#'    keep_tex: yes
 #'    number_sections: true
 #' ---
 

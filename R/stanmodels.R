@@ -1,4 +1,4 @@
-# Part of the hivincid package for estimating model parameters
+# Part of the hivmappr package for estimating model parameters
 # Copyright (C) 2015, 2016, 2017 Trustees of Columbia University
 # 
 # This program is free software; you can redistribute it and/or

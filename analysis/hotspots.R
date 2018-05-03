@@ -1,4 +1,4 @@
-setwd("~/Documents/Research/spatial-estimates/hivincid/analysis/")
+setwd("~/Documents/Research/spatial-estimates/hivmappr/analysis/")
 devtools::load_all()
 library(rstan)
 library(data.table)
@@ -74,7 +74,7 @@ sim_hotspot <- function(E_recent=20){
 }
 
 
-fit20 <- sampling(hivincid:::stanmodels$incidence, data=dat20[[1]], control = list(adapt_delta = 0.95))
+fit20 <- sampling(hivmappr:::stanmodels$incidence, data=dat20[[1]], control = list(adapt_delta = 0.95))
 
 fit200 <- sampling(incidence:::stanmodels$incidence, data=dat200[[2]], control = list(adapt_delta = 0.95))
 
@@ -86,12 +86,12 @@ summary(fit200, "u_i")$summary
 summary(fit20, "u_i")$summary
 
 #' ## Run simulation on DIDE cluster
-workdir <- "/Volumes/jeff/hivincid"
+workdir <- "/Volumes/jeff/hivmappr"
 dir.create(workdir)
 
 mrc_config <- didehpc::didehpc_config(workdir=workdir, use_common_lib=FALSE, cluster="mrc", use_workers=TRUE)
-pkgsrc <- provisionr::package_sources(local="~/Documents/Research/spatial-estimates/hivincid")
-ctx <- context::context_save(file.path(workdir, "context"), packages="hivincid", package_sources=pkgsrc)
+pkgsrc <- provisionr::package_sources(local="~/Documents/Research/spatial-estimates/hivmappr")
+ctx <- context::context_save(file.path(workdir, "context"), packages="hivmappr", package_sources=pkgsrc)
 mrcq <- didehpc::queue_didehpc(ctx, config=mrc_config)
 
 #' # Generate simulated data
@@ -107,7 +107,7 @@ dat2 <- lapply(dat, lapply, function(d){
   d$Xkappa <- cbind(d$Xkappa, as.integer(1:d$N_reg %in% hotid)); d})
 
 
-tmp <- sampling_summary(hivincid::stanmodels$incidence, data=dat2[[1]][[1]], control=list(adapt_delta=0.95))
+tmp <- sampling_summary(hivmappr::stanmodels$incidence, data=dat2[[1]][[1]], control=list(adapt_delta=0.95))
 
 
 mrcq$submit_workers(20)
@@ -115,19 +115,19 @@ mrcq$submit_workers(20)
 #' Basic (intercept only) simulation
 for(ii in seq_along(Erecent))
   mrcq$mapply(sampling_summary, data=dat[[ii]], name=paste0("bas", Erecent[ii]),
-              MoreArgs=list(object=hivincid:::stanmodels$incidence, refresh=0))
+              MoreArgs=list(object=hivmappr:::stanmodels$incidence, refresh=0))
 
 for(ii in seq_along(Erecent))
   mrcq$mapply(sampling_summary, data=dat2[[ii]], name=paste0("cov", Erecent[ii]),
-              MoreArgs=list(object=hivincid:::stanmodels$incidence, refresh=0,
+              MoreArgs=list(object=hivmappr:::stanmodels$incidence, refresh=0,
                             control=list(adapt_delta=0.95)))
 
-mrcq$mapply(sampling_summary, data=dat50, name="sim50", MoreArgs=list(object=hivincid:::stanmodels$incidence, refresh=0))
-mrcq$mapply(sampling_summary, data=dat100, name="sim100", MoreArgs=list(object=hivincid:::stanmodels$incidence, refresh=0))
-mrcq$mapply(sampling_summary, data=dat200, name="sim200", MoreArgs=list(object=hivincid:::stanmodels$incidence, refresh=0))
-mrcq$mapply(sampling_summary, data=dat500, name="sim500", MoreArgs=list(object=hivincid:::stanmodels$incidence, refresh=0))
-mrcq$mapply(sampling_summary, data=dat1000, name="sim1000", MoreArgs=list(object=hivincid:::stanmodels$incidence, refresh=0))
-mrcq$mapply(sampling_summary, data=dat2000, name="sim2000", MoreArgs=list(object=hivincid:::stanmodels$incidence, refresh=0))
+mrcq$mapply(sampling_summary, data=dat50, name="sim50", MoreArgs=list(object=hivmappr:::stanmodels$incidence, refresh=0))
+mrcq$mapply(sampling_summary, data=dat100, name="sim100", MoreArgs=list(object=hivmappr:::stanmodels$incidence, refresh=0))
+mrcq$mapply(sampling_summary, data=dat200, name="sim200", MoreArgs=list(object=hivmappr:::stanmodels$incidence, refresh=0))
+mrcq$mapply(sampling_summary, data=dat500, name="sim500", MoreArgs=list(object=hivmappr:::stanmodels$incidence, refresh=0))
+mrcq$mapply(sampling_summary, data=dat1000, name="sim1000", MoreArgs=list(object=hivmappr:::stanmodels$incidence, refresh=0))
+mrcq$mapply(sampling_summary, data=dat2000, name="sim2000", MoreArgs=list(object=hivmappr:::stanmodels$incidence, refresh=0))
             
 
 #' Collect simulation results
@@ -242,9 +242,9 @@ dat20 <- sim_hotspot(20)
 dat200 <- sim_hotspot(200)
 dat800 <- sim_hotspot(800)
 
-fit20 <- sampling(hivincid:::stanmodels$incidence, data=dat20, control = list(adapt_delta = 0.95))
-fit200 <- sampling(hivincid:::stanmodels$incidence, data=dat200, control = list(adapt_delta = 0.95))
-fit800 <- sampling(hivincid:::stanmodels$incidence, data=dat800, control = list(adapt_delta = 0.95))
+fit20 <- sampling(hivmappr:::stanmodels$incidence, data=dat20, control = list(adapt_delta = 0.95))
+fit200 <- sampling(hivmappr:::stanmodels$incidence, data=dat200, control = list(adapt_delta = 0.95))
+fit800 <- sampling(hivmappr:::stanmodels$incidence, data=dat800, control = list(adapt_delta = 0.95))
 
 summary(fit20, "excess_i")$summary
 summary(fit200, "excess_i")$summary
