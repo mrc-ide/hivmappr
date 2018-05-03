@@ -51,7 +51,7 @@ data <- with(mw@data, list(N_reg = nrow(mw),
                            Nkappa = 1,
                            Xkappa = matrix(10, length(district), 1)))
 
-fit <- sampling(hivincid:::stanmodels$incidence_nat, data=data, control = list(adapt_delta = 0.95))
+fit <- sampling(hivmappr:::stanmodels$incidence_nat, data=data, control = list(adapt_delta = 0.95))
 
 
 #' Map showing number of recent cases by district
