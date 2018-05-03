@@ -18,12 +18,12 @@ library(gridExtra)
 #' ## 1. Upload shape file, generate a spreadsheet table to input data
 
 ## Shape file from DHS: https://spatialdata.dhsprogram.com/boundaries/#view=map&countryId=MW&surveyId=483&level=2
-sh <- readOGR(system.file("extdata", "mwsh", package="hivincid"))
+sh <- readOGR(system.file("extdata", "mwsh", package="hivmappr"))
 plot(sh)
 
 #' ## 2. Copy and paste data into spreadsheet
 
-df <- read.csv(system.file("extdata", "mwdf.csv", package="hivincid"))
+df <- read.csv(system.file("extdata", "mwdf.csv", package="hivmappr"))
 mw <- merge(sh, df)
 
 
