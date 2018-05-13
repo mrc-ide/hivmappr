@@ -9,6 +9,7 @@ library(magrittr)
 library(rstan)
 library(data.table)
 library(RColorBrewer)
+library(abind)
 
 library(ggplot2)
 library(ggridges)
@@ -119,7 +120,7 @@ grid.arrange(panA, panB, panC, panD, ncol=4)
 #' ### Density plot of posterior district estimates
 
 samp <- as.matrix(fit, c("rho_i", "alpha_i", "u_i", "lambda_i", "infections_i")) %>%
-  abind::abind(along=0)
+  abind(along=0)
 names(dimnames(samp)) <- c("model", NA, "param")
 samp <- melt(samp) %>% data.table
 samp$district_idx <- as.integer(sub(".*\\[([0-9]+)\\]", "\\1", samp$param))
