@@ -1,3 +1,5 @@
 ^\.travis\.yml$
 ^analysis$
 ^data-raw$
+^README\.Rmd$
+^LICENSE\.md$

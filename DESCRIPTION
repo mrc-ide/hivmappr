@@ -6,7 +6,7 @@ Date: 2018-04-29
 Author@R: c(person("Jeff", "Eaton", email = "jeffrey.eaton@imperial.ac.uk", role = c("aut", "cre")),
             person("Sumali", "Bajaj", role = "aut"))
 Description: More about what it does (maybe more than one line)
-License: What license is it under?
+License: GPL-3
 Depends:
     R (>= 3.3.0),
     Rcpp (>= 0.12.15),
