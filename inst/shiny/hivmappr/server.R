@@ -10,6 +10,7 @@
 library(hivmappr)
 library(rstan)
 library(rhandsontable)
+library(rgdal)
 
 library(ggplot2)
 library(grid)
@@ -197,7 +198,7 @@ shinyServer(function(input, output) {
       scale_y_discrete(element_blank()) +
       scale_fill_distiller(guide = "none", palette="Purples", direction=1, trans="log10") +
       labs(title="Prevalence (%)") +
-      th_density + theme(axis.text.y=element_text(size=7, hjust=1))
+      th_density + theme(axis.text.y=element_text(hjust=1))
     panB <- ggplot(data=samples[samples$param == "alpha_i", ],
                    aes(x=value, y=district, fill = ..x.. )) +
       ggridges::geom_density_ridges_gradient(rel_min_height=0.01) +
@@ -245,7 +246,7 @@ shinyServer(function(input, output) {
                                  round(scale*ci_u, digits)))
     est$label <- factor(est$param, c("rho", "alpha", "lambda", "infections"),
                         c("Prevalence (%)", "ART coverage (%)", "Incidence (per 1000)", "New infections"))
-    dcast(est, district+region ~ label, value.var="str")
+    reshape2::dcast(est, district+region ~ label, value.var="str")
   })
   output$results <- renderTable({
     output_table()

@@ -51,8 +51,8 @@ shinyUI(fluidPage(
              tableOutput("results")
             ),
     tabPanel("5. Visualize results",
-             plotOutput("modelfitplot", width="50%"),
-             plotOutput("densityplots"), width="50%"),
+             plotOutput("modelfitplot", width="90%"),
+             plotOutput("densityplots", width="90%")),
     widths=c(2,8)
   )
 ))
