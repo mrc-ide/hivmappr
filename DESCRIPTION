@@ -1,20 +1,32 @@
 Package: hivmappr
 Type: Package
 Title: Small-area estimation model for HIV prevalence, ART coverage, and incidence
-Version: 1.0.1
+Version: 1.0.2
 Date: 2018-04-29
 Author@R: c(person("Jeff", "Eaton", email = "jeffrey.eaton@imperial.ac.uk", role = c("aut", "cre")),
-            person("Sumali", "Bajaj", role = "aut"))
+            person("Sumali", "Bajaj", role = "aut"),
+	    person("Lucy", "Li", role = "aut"))
 Description: More about what it does (maybe more than one line)
 License: GPL-3
 Depends:
     R (>= 3.3.0),
     Rcpp (>= 0.12.15),
-    methods
+    methods,
+    rhandsontable,
+    maps,
+    mapproj,
+    ggplot2,
+    ggridges,
+    grid,
+    gridExtra
 Imports:
     rstan (>= 2.17.3),
     rstantools (>= 1.4.0),
-    shiny
+    shiny,
+    abind,
+    ggridges,
+    rgdal,
+    reshape2
 LinkingTo:
     StanHeaders (>= 2.17.2),
     rstan (>= 2.17.3),

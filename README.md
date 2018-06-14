@@ -19,8 +19,20 @@ Install the development version of `hivmappr` from
 
 ``` r
 # install.packages("devtools")
-devtools::install_github("mrc-ide/hivmappr")
+devtools::install_github("mrc-ide/hivmappr@shiny")
 ```
+
+## Shiny interface
+
+After installation, to launch the shiny interface:
+
+``` r
+library(hivmappr)
+run_hivmappr()
+```
+
+This is still under development and presently simply shows a demo of the
+workflow.
 
 ## Example
 
@@ -59,7 +71,7 @@ Repository](https://spatialdata.dhsprogram.com/boundaries/#view=map&countryId=MW
 ``` r
 sh <- readOGR(system.file("extdata", "mwsh", package="hivmappr"))
 #> OGR data source with driver: ESRI Shapefile 
-#> Source: "/Library/Frameworks/R.framework/Versions/3.4/Resources/library/hivmappr/extdata/mwsh", layer: "districts"
+#> Source: "/Users/jeff/Downloads/hivmappr/inst/extdata/mwsh", layer: "districts"
 #> with 28 features
 #> It has 3 fields
 plot(sh)
@@ -126,11 +138,19 @@ fit <- sampling(hivmappr:::stanmodels$incidence_rita,
 #> SAMPLING FOR MODEL 'incidence_rita' NOW (CHAIN 1).
 #> Rejecting initial value:
 #>   Error evaluating the log probability at the initial value.
-#> Exception: binomial_lpmf: Probability parameter[1] is -4.74996e+07, but must be in the interval [0, 1]  (in 'model_incidence_rita' at line 145)
+#> Exception: binomial_lpmf: Probability parameter[1] is 9.74753e+07, but must be in the interval [0, 1]  (in 'model_incidence_rita' at line 145)
+#> 
+#> Rejecting initial value:
+#>   Error evaluating the log probability at the initial value.
+#> Exception: binomial_lpmf: Probability parameter[1] is 6.01372e+07, but must be in the interval [0, 1]  (in 'model_incidence_rita' at line 145)
+#> 
+#> Rejecting initial value:
+#>   Error evaluating the log probability at the initial value.
+#> Exception: binomial_lpmf: Probability parameter[1] is 92603, but must be in the interval [0, 1]  (in 'model_incidence_rita' at line 145)
 #> 
 #> 
-#> Gradient evaluation took 0.000116 seconds
-#> 1000 transitions using 10 leapfrog steps per transition would take 1.16 seconds.
+#> Gradient evaluation took 0.000165 seconds
+#> 1000 transitions using 10 leapfrog steps per transition would take 1.65 seconds.
 #> Adjust your expectations accordingly!
 #> 
 #> 
@@ -147,31 +167,19 @@ fit <- sampling(hivmappr:::stanmodels$incidence_rita,
 #> Iteration: 1800 / 2000 [ 90%]  (Sampling)
 #> Iteration: 2000 / 2000 [100%]  (Sampling)
 #> 
-#>  Elapsed Time: 7.1056 seconds (Warm-up)
-#>                5.66293 seconds (Sampling)
-#>                12.7685 seconds (Total)
+#>  Elapsed Time: 6.37376 seconds (Warm-up)
+#>                5.42811 seconds (Sampling)
+#>                11.8019 seconds (Total)
 #> 
 #> 
 #> SAMPLING FOR MODEL 'incidence_rita' NOW (CHAIN 2).
 #> Rejecting initial value:
 #>   Error evaluating the log probability at the initial value.
-#> Exception: binomial_lpmf: Probability parameter[1] is -3.39517, but must be in the interval [0, 1]  (in 'model_incidence_rita' at line 145)
-#> 
-#> Rejecting initial value:
-#>   Error evaluating the log probability at the initial value.
-#> Exception: binomial_lpmf: Probability parameter[1] is -5.64029e+08, but must be in the interval [0, 1]  (in 'model_incidence_rita' at line 145)
-#> 
-#> Rejecting initial value:
-#>   Error evaluating the log probability at the initial value.
-#> Exception: binomial_lpmf: Probability parameter[1] is -1.15516e+07, but must be in the interval [0, 1]  (in 'model_incidence_rita' at line 145)
-#> 
-#> Rejecting initial value:
-#>   Error evaluating the log probability at the initial value.
-#> Exception: binomial_lpmf: Probability parameter[1] is 1.16534e+06, but must be in the interval [0, 1]  (in 'model_incidence_rita' at line 145)
+#> Exception: binomial_lpmf: Probability parameter[1] is -8448.16, but must be in the interval [0, 1]  (in 'model_incidence_rita' at line 145)
 #> 
 #> 
-#> Gradient evaluation took 7.7e-05 seconds
-#> 1000 transitions using 10 leapfrog steps per transition would take 0.77 seconds.
+#> Gradient evaluation took 7.8e-05 seconds
+#> 1000 transitions using 10 leapfrog steps per transition would take 0.78 seconds.
 #> Adjust your expectations accordingly!
 #> 
 #> 
@@ -188,15 +196,15 @@ fit <- sampling(hivmappr:::stanmodels$incidence_rita,
 #> Iteration: 1800 / 2000 [ 90%]  (Sampling)
 #> Iteration: 2000 / 2000 [100%]  (Sampling)
 #> 
-#>  Elapsed Time: 6.6426 seconds (Warm-up)
-#>                4.37309 seconds (Sampling)
-#>                11.0157 seconds (Total)
+#>  Elapsed Time: 6.86799 seconds (Warm-up)
+#>                4.46233 seconds (Sampling)
+#>                11.3303 seconds (Total)
 #> 
 #> 
 #> SAMPLING FOR MODEL 'incidence_rita' NOW (CHAIN 3).
 #> 
-#> Gradient evaluation took 0.000125 seconds
-#> 1000 transitions using 10 leapfrog steps per transition would take 1.25 seconds.
+#> Gradient evaluation took 7.8e-05 seconds
+#> 1000 transitions using 10 leapfrog steps per transition would take 0.78 seconds.
 #> Adjust your expectations accordingly!
 #> 
 #> 
@@ -213,23 +221,15 @@ fit <- sampling(hivmappr:::stanmodels$incidence_rita,
 #> Iteration: 1800 / 2000 [ 90%]  (Sampling)
 #> Iteration: 2000 / 2000 [100%]  (Sampling)
 #> 
-#>  Elapsed Time: 6.63651 seconds (Warm-up)
-#>                3.77269 seconds (Sampling)
-#>                10.4092 seconds (Total)
+#>  Elapsed Time: 6.49051 seconds (Warm-up)
+#>                4.68868 seconds (Sampling)
+#>                11.1792 seconds (Total)
 #> 
 #> 
 #> SAMPLING FOR MODEL 'incidence_rita' NOW (CHAIN 4).
-#> Rejecting initial value:
-#>   Error evaluating the log probability at the initial value.
-#> Exception: binomial_lpmf: Probability parameter[1] is 34.1454, but must be in the interval [0, 1]  (in 'model_incidence_rita' at line 145)
 #> 
-#> Rejecting initial value:
-#>   Error evaluating the log probability at the initial value.
-#> Exception: binomial_lpmf: Probability parameter[1] is 5028.33, but must be in the interval [0, 1]  (in 'model_incidence_rita' at line 145)
-#> 
-#> 
-#> Gradient evaluation took 7.9e-05 seconds
-#> 1000 transitions using 10 leapfrog steps per transition would take 0.79 seconds.
+#> Gradient evaluation took 7.1e-05 seconds
+#> 1000 transitions using 10 leapfrog steps per transition would take 0.71 seconds.
 #> Adjust your expectations accordingly!
 #> 
 #> 
@@ -246,9 +246,12 @@ fit <- sampling(hivmappr:::stanmodels$incidence_rita,
 #> Iteration: 1800 / 2000 [ 90%]  (Sampling)
 #> Iteration: 2000 / 2000 [100%]  (Sampling)
 #> 
-#>  Elapsed Time: 6.84263 seconds (Warm-up)
-#>                3.80519 seconds (Sampling)
-#>                10.6478 seconds (Total)
+#>  Elapsed Time: 6.73428 seconds (Warm-up)
+#>                4.03998 seconds (Sampling)
+#>                10.7743 seconds (Total)
+#> Warning: There were 2 divergent transitions after warmup. Increasing adapt_delta above 0.95 may help. See
+#> http://mc-stan.org/misc/warnings.html#divergent-transitions-after-warmup
+#> Warning: Examine the pairs() plot to diagnose sampling problems
 ```
 
 #### 5\. Display estimates
@@ -372,10 +375,10 @@ panD <- ggplot(data=samp[param == "infections_i"],
   th
 
 grid.arrange(panA, panB, panC, panD, ncol=4, widths=c(1.35, 1, 1, 1))
-#> Picking joint bandwidth of 0.000957
-#> Picking joint bandwidth of 0.00655
-#> Picking joint bandwidth of 0.0289
-#> Picking joint bandwidth of 0.0294
+#> Picking joint bandwidth of 0.000968
+#> Picking joint bandwidth of 0.00665
+#> Picking joint bandwidth of 0.0288
+#> Picking joint bandwidth of 0.0297
 ```
 
 <img src="man/figures/README-district posterior-1.png" width="100%" />
@@ -404,31 +407,31 @@ dcast(est, district+region ~ label, value.var="str") %>% knitr::kable()
 
 | district   | region   | Prevalence (%)    | ART coverage (%) | Incidence (per 1000) | New infections    |
 | :--------- | :------- | :---------------- | :--------------- | :------------------- | :---------------- |
-| Chitipa    | Northern | 6.1 (5.1, 7.2)    | 44 (37, 52)      | 3.6 (1.2, 9.9)       | 400 (100, 1100)   |
-| Karonga    | Northern | 7.5 (6.6, 8.6)    | 58 (51, 66)      | 3.0 (0.7, 6.1)       | 500 (100, 1000)   |
-| Rumphi     | Northern | 6.2 (5.6, 7.1)    | 70 (62, 78)      | 2.2 (0.6, 4.7)       | 200 (100, 500)    |
-| Nkhata Bay | Northern | 6.8 (5.9, 7.7)    | 59 (52, 67)      | 2.7 (0.7, 5.9)       | 300 (100, 700)    |
-| Mzimba     | Northern | 5.9 (5.2, 6.7)    | 66 (58, 74)      | 2.4 (0.8, 5.8)       | 1300 (400, 3100)  |
-| Likoma     | Northern | 8.3 (7.1, 9.7)    | 62 (53, 72)      | 3.4 (0.9, 8.1)       | 0 (0, 0)          |
-| Nkhotakota | Central  | 5.9 (5.3, 6.8)    | 61 (53, 68)      | 2.3 (0.6, 4.8)       | 400 (100, 900)    |
-| Kasungu    | Central  | 4.3 (3.7, 4.9)    | 56 (48, 64)      | 1.7 (0.4, 3.5)       | 700 (200, 1300)   |
-| Ntchisi    | Central  | 3.8 (3.2, 4.4)    | 51 (43, 59)      | 2.0 (0.7, 4.7)       | 300 (100, 600)    |
-| Dowa       | Central  | 3.3 (2.9, 3.9)    | 61 (52, 68)      | 1.5 (0.5, 3.7)       | 500 (200, 1300)   |
-| Mchinji    | Central  | 5.0 (4.4, 5.6)    | 59 (52, 67)      | 1.9 (0.5, 4.0)       | 600 (100, 1100)   |
-| Salima     | Central  | 6.4 (5.6, 7.2)    | 64 (56, 72)      | 2.5 (0.6, 5.3)       | 500 (100, 1100)   |
-| Lilongwe   | Central  | 7.3 (6.4, 8.2)    | 59 (52, 66)      | 3.1 (1.3, 5.9)       | 3900 (1700, 7500) |
-| Dedza      | Central  | 4.4 (3.8, 5.0)    | 58 (51, 66)      | 1.7 (0.4, 3.5)       | 600 (200, 1300)   |
-| Ntcheu     | Central  | 8.0 (6.9, 9.2)    | 57 (50, 66)      | 3.1 (0.7, 6.3)       | 800 (200, 1600)   |
-| Mangochi   | Southern | 9.9 (8.6, 11.2)   | 52 (46, 59)      | 4.8 (2.1, 9.6)       | 2100 (900, 4100)  |
-| Machinga   | Southern | 8.6 (7.6, 9.6)    | 63 (56, 71)      | 3.2 (0.8, 6.4)       | 900 (200, 1700)   |
-| Balaka     | Southern | 10.8 (9.5, 12.2)  | 59 (52, 66)      | 4.2 (1.0, 8.7)       | 700 (200, 1400)   |
-| Zomba      | Southern | 12.6 (11.2, 14.0) | 58 (52, 65)      | 5.0 (1.8, 9.6)       | 1800 (600, 3400)  |
-| Neno       | Southern | 10.1 (9.0, 11.4)  | 74 (65, 82)      | 3.4 (0.8, 7.6)       | 200 (100, 500)    |
-| Mwanza     | Southern | 8.4 (7.4, 9.5)    | 63 (55, 71)      | 4.1 (1.4, 11.5)      | 200 (100, 700)    |
-| Blantyre   | Southern | 14.8 (13.1, 16.7) | 50 (44, 56)      | 7.2 (3.3, 13.3)      | 4300 (2000, 7900) |
-| Phalombe   | Southern | 14.6 (12.8, 16.5) | 61 (54, 70)      | 5.3 (1.4, 10.4)      | 900 (200, 1700)   |
-| Chiradzulu | Southern | 19.0 (17.4, 20.7) | 75 (69, 82)      | 7.1 (2.5, 16.5)      | 1000 (300, 2300)  |
-| Mulanje    | Southern | 16.6 (14.9, 18.5) | 53 (48, 59)      | 7.6 (2.8, 15.0)      | 1900 (700, 3800)  |
-| Thyolo     | Southern | 14.6 (13.0, 16.4) | 60 (53, 67)      | 5.4 (1.3, 10.5)      | 1600 (400, 3200)  |
-| Chikwawa   | Southern | 10.0 (8.6, 11.6)  | 57 (49, 66)      | 4.0 (1.0, 8.2)       | 900 (200, 1900)   |
-| Nsanje     | Southern | 12.3 (11.1, 13.7) | 67 (60, 74)      | 4.4 (1.2, 9.0)       | 500 (100, 1100)   |
+| Chitipa    | Northern | 6.1 (5.1, 7.2)    | 44 (37, 53)      | 3.6 (1.2, 9.5)       | 400 (100, 1000)   |
+| Karonga    | Northern | 7.6 (6.6, 8.6)    | 58 (51, 66)      | 3.0 (0.7, 6.1)       | 500 (100, 1000)   |
+| Rumphi     | Northern | 6.3 (5.6, 7.1)    | 70 (62, 79)      | 2.2 (0.6, 4.8)       | 200 (100, 500)    |
+| Nkhata Bay | Northern | 6.8 (6.0, 7.7)    | 59 (51, 67)      | 2.8 (0.7, 6.2)       | 300 (100, 800)    |
+| Mzimba     | Northern | 5.9 (5.2, 6.7)    | 66 (58, 74)      | 2.4 (0.8, 5.2)       | 1300 (400, 2800)  |
+| Likoma     | Northern | 8.3 (7.1, 9.7)    | 62 (53, 72)      | 3.4 (0.9, 7.5)       | 0 (0, 0)          |
+| Nkhotakota | Central  | 5.9 (5.2, 6.8)    | 61 (53, 69)      | 2.3 (0.6, 4.9)       | 400 (100, 900)    |
+| Kasungu    | Central  | 4.3 (3.7, 5.0)    | 56 (48, 64)      | 1.7 (0.5, 3.4)       | 600 (200, 1300)   |
+| Ntchisi    | Central  | 3.8 (3.2, 4.4)    | 51 (44, 59)      | 2.0 (0.7, 5.1)       | 300 (100, 700)    |
+| Dowa       | Central  | 3.3 (2.9, 3.9)    | 61 (52, 69)      | 1.5 (0.5, 3.6)       | 500 (200, 1300)   |
+| Mchinji    | Central  | 5.0 (4.4, 5.6)    | 59 (52, 67)      | 1.9 (0.5, 4.1)       | 600 (100, 1200)   |
+| Salima     | Central  | 6.4 (5.6, 7.2)    | 64 (56, 72)      | 2.5 (0.6, 5.5)       | 500 (100, 1100)   |
+| Lilongwe   | Central  | 7.3 (6.4, 8.2)    | 59 (52, 66)      | 3.1 (1.4, 5.8)       | 3900 (1700, 7300) |
+| Dedza      | Central  | 4.4 (3.8, 5.1)    | 58 (50, 66)      | 1.7 (0.5, 3.5)       | 600 (200, 1300)   |
+| Ntcheu     | Central  | 8.0 (6.9, 9.2)    | 57 (50, 66)      | 3.1 (0.8, 6.2)       | 800 (200, 1600)   |
+| Mangochi   | Southern | 9.9 (8.6, 11.2)   | 52 (45, 59)      | 4.7 (1.9, 9.7)       | 2000 (800, 4200)  |
+| Machinga   | Southern | 8.6 (7.6, 9.7)    | 63 (56, 71)      | 3.2 (0.8, 6.4)       | 800 (200, 1700)   |
+| Balaka     | Southern | 10.8 (9.4, 12.2)  | 58 (51, 67)      | 4.2 (1.1, 8.8)       | 700 (200, 1400)   |
+| Zomba      | Southern | 12.5 (11.2, 14.1) | 58 (52, 65)      | 5.0 (1.5, 9.6)       | 1700 (500, 3300)  |
+| Neno       | Southern | 10.1 (9.0, 11.3)  | 74 (65, 82)      | 3.4 (0.9, 7.4)       | 200 (100, 500)    |
+| Mwanza     | Southern | 8.4 (7.4, 9.5)    | 63 (55, 71)      | 4.0 (1.3, 10.5)      | 200 (100, 600)    |
+| Blantyre   | Southern | 14.8 (13.1, 16.7) | 50 (44, 56)      | 7.1 (3.1, 13.2)      | 4200 (1900, 7900) |
+| Phalombe   | Southern | 14.5 (12.8, 16.4) | 61 (54, 70)      | 5.4 (1.4, 10.8)      | 900 (200, 1700)   |
+| Chiradzulu | Southern | 19.0 (17.3, 20.8) | 75 (69, 82)      | 7.1 (2.5, 17.0)      | 1000 (300, 2300)  |
+| Mulanje    | Southern | 16.6 (14.9, 18.6) | 53 (47, 59)      | 7.6 (3.1, 14.9)      | 1900 (800, 3800)  |
+| Thyolo     | Southern | 14.6 (12.9, 16.4) | 60 (53, 67)      | 5.3 (1.2, 10.4)      | 1600 (400, 3200)  |
+| Chikwawa   | Southern | 10.0 (8.6, 11.5)  | 57 (50, 66)      | 3.9 (1.0, 8.1)       | 900 (200, 1900)   |
+| Nsanje     | Southern | 12.3 (11.0, 13.8) | 67 (60, 75)      | 4.4 (1.2, 9.3)       | 500 (100, 1100)   |

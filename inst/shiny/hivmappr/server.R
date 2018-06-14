@@ -7,18 +7,11 @@
 #    http://shiny.rstudio.com/
 #
 
-devtools::load_all()
-library(rgdal)
-library(magrittr)
-library(rstan)
-library(data.table)
-library(RColorBrewer)
 library(hivmappr)
-library(abind)
+library(rstan)
 library(rhandsontable)
 
 library(ggplot2)
-library(ggridges)
 library(grid)
 library(gridExtra)
 
@@ -26,7 +19,7 @@ library(shiny)
 
 
 ## Load demo data
-demo_sh <- readOGR(system.file("extdata", "mwsh", package="hivmappr"))
+demo_sh <- rgdal::readOGR(system.file("extdata", "mwsh", package="hivmappr"))
 demo_csv <- read.csv(system.file("extdata", "mwdf.csv", package="hivmappr"))
 demo_mw <- merge(demo_sh, demo_csv)
 
@@ -42,18 +35,14 @@ th_map <- function(title, polygons)
              legend.position=c(1, 1),
              legend.justification=c(0.5, 1),
              legend.background = element_rect(fill = NA),
-             legend.key.size=unit(12, "points"),
-             legend.text = element_text(size=10),
-             plot.title=element_text(hjust=0.5, face="bold"),
-             text = element_text(size=10)))
+             plot.title=element_text(hjust=0.5, face="bold")))
 
 th_density <- list(theme_minimal(),
-           theme(plot.title=element_text(hjust=0.5, face="bold", size=8),
-                 text = element_text(size=10),
-                 aspect.ratio=2,
-                 axis.text.y=element_blank(),
-                 axis.ticks.y = element_line(),
-                 axis.ticks.length = unit(2, "pt")))
+                   theme(plot.title=element_text(hjust=0.5, face="bold"),
+                         aspect.ratio=2,
+                         axis.text.y=element_blank(),
+                         axis.ticks.y = element_line(),
+                         axis.ticks.length = unit(2, "pt")))
 
 tempcsvdir <- tempdir()
 
@@ -69,7 +58,7 @@ shinyServer(function(input, output) {
       file.rename(input$shapefile$datapath[i],
                   paste0(temp_dir, "/", input$shapefile$name[i]))
     })
-    values$sh <- readOGR(temp_dir)
+    values$sh <- rgdal::readOGR(temp_dir)
     values$mw <- merge(values$sh, values$csvdata)
     showNotification("Your shapefile data have been uploaded.", duration=5)
   })
@@ -100,11 +89,25 @@ shinyServer(function(input, output) {
     values$sh <- demo_sh
     values$csvdata <- demo_csv
   })
+  output$shapeoutline <- renderPlot({
+    if (is.na(values$sh))
+      return (print(ggplot()))
+    browser()
+    mwpoly <- map_data(values$mw, namefield="district")
+    ggplot(mwpoly, aes(long, lat, group = group)) +
+      geom_polygon(col="black", fill=NA) +
+      coord_map() +
+      theme(axis.ticks = element_blank(),
+            axis.text = element_blank(),
+            axis.title = element_blank(),
+            panel.background = element_blank(),
+            panel.border = element_blank())
+  })
   output$shapefileplot <- renderPlot({
     if (is.na(values$sh)) return (print(ggplot()))
     showNotification("Please wait while figure(s) load.", duration=5)
     mwpoly <- map_data(values$mw, namefield="district")
-    data_varnames <- names(values$mw@data)[!(names(values$mw@data)%in%c("district", "region", "zone"))]
+    data_varnames <- names(values$mw@data)[!(names(values$mw@data) %in% c("district", "region", "zone"))]
     plots <- lapply(data_varnames, function (varname) {
       plotdata <- values$mw@data[, c("district", varname)]
       names(plotdata)[2] <- "value"
@@ -141,17 +144,16 @@ shinyServer(function(input, output) {
                                       sigma_u_sd = 1))
     showNotification("Starting model fitting process... This message will automatically disappear once fitting has completed.",
                      duration=NULL, id="modelfitnotification")
-    fit <- sampling(stanmodels$incidence_rita, data=values$data, control = list(adapt_delta = 0.95))
+    fit <- sampling(hivmappr:::stanmodels$incidence_rita, data=values$data, control = list(adapt_delta = 0.95))
     est <- summary(fit, c("rho_i", "alpha_i", "u_i", "lambda_i", "infections_i"))$summary[, "mean"]
-    est <- data.table(param = names(est), value=est)
+    est <- data.frame(param = names(est), value=est)
     est$district_idx <- as.integer(sub(".*\\[([0-9]+)\\]", "\\1", est$param))
     est$district <- factor(values$mw$district[est$district_idx], values$data$district)
     est$region <- factor(values$mw$region[est$district_idx], c("Northern", "Central", "Southern"))
     est$param <- sub("([^\\[]+).*", "\\1", est$param)
-    samp <- as.matrix(fit, c("rho_i", "alpha_i", "u_i", "lambda_i", "infections_i")) %>%
-      abind(along=0)
+    samp <- abind::abind(as.matrix(fit, c("rho_i", "alpha_i", "u_i", "lambda_i", "infections_i")), along=0)
     names(dimnames(samp)) <- c("model", NA, "param")
-    samp <- melt(samp) %>% data.table
+    samp <- reshape2::melt(samp)
     samp$district_idx <- as.integer(sub(".*\\[([0-9]+)\\]", "\\1", samp$param))
     samp$district <- factor(values$mw$district[samp$district_idx],
                             rev(values$mw$district))
@@ -168,19 +170,19 @@ shinyServer(function(input, output) {
     estimates <- modelfit()$estimates
     ## Extract map polygon data 
     mwpoly <- map_data(values$mw, namefield="district")
-    panA <- ggplot(estimates[param == "rho_i"], aes(map_id = district)) +
+    panA <- ggplot(estimates[estimates$param == "rho_i", ], aes(map_id = district)) +
       scale_fill_distiller(element_blank(), palette="Purples", direction=1,
                            lim=c(0, 0.25), labels=function(x) round(100*x)) +
       th_map("Prevalence (%)", mwpoly)
-    panB <- ggplot(estimates[param == "alpha_i"], aes(map_id = district)) +
+    panB <- ggplot(estimates[estimates$param == "alpha_i", ], aes(map_id = district)) +
       scale_fill_distiller(element_blank(), palette="Blues", direction=1,
                            lim=c(0.3, 0.8), labels=function(x) round(100*x)) +
       th_map("ART Coverage (%)", mwpoly)
-    panC <- ggplot(estimates[param == "u_i"], aes(map_id = district)) +
+    panC <- ggplot(estimates[estimates$param == "u_i", ], aes(map_id = district)) +
       scale_fill_distiller(element_blank(), palette="PRGn", direction=1,
                            lim=c(-0.2, 0.2)) +
       th_map("u_i", mwpoly)
-    panD <- ggplot(estimates[param == "lambda_i"], aes(map_id = district)) +
+    panD <- ggplot(estimates[estimates$param == "lambda_i", ], aes(map_id = district)) +
       scale_fill_distiller(element_blank(), palette="Reds", direction=1,
                            lim=c(1, 8)/1e3, labels=function(x) round(1000*x)) +
       th_map("Incidence / 1000", mwpoly)
@@ -188,27 +190,27 @@ shinyServer(function(input, output) {
   }, res=50)
   output$densityplots <- renderPlot({
     samples <- modelfit()$samples
-    panA <- ggplot(data=samples[param == "rho_i"],
+    panA <- ggplot(data=samples[samples$param == "rho_i", ],
                    aes(x=value, y=district, fill = ..x.. )) +
-      geom_density_ridges_gradient(rel_min_height=0.01) +
+      ggridges::geom_density_ridges_gradient(rel_min_height=0.01) +
       geom_vline(xintercept=0.10, color="grey20", linetype="dashed") +
       scale_x_continuous(element_blank(), labels=function(x) round(100*x, 1)) +
       scale_y_discrete(element_blank()) +
       scale_fill_distiller(guide = "none", palette="Purples", direction=1, trans="log10") +
       labs(title="Prevalence (%)") +
       th_density + theme(axis.text.y=element_text(size=7, hjust=1))
-    panB <- ggplot(data=samples[param == "alpha_i"],
+    panB <- ggplot(data=samples[samples$param == "alpha_i", ],
                    aes(x=value, y=district, fill = ..x.. )) +
-      geom_density_ridges_gradient(rel_min_height=0.01) +
+      ggridges::geom_density_ridges_gradient(rel_min_height=0.01) +
       geom_vline(xintercept=0.51, color="grey20", linetype="dashed") +
       scale_x_continuous(element_blank(), labels=function(x) round(100*x, 1)) +
       scale_y_discrete(element_blank()) +
       scale_fill_distiller(guide = "none", palette="Blues", direction=1) +
       labs(title="ART Coverage (%)") +
       th_density
-    panC <- ggplot(data=samples[param == "lambda_i"],
+    panC <- ggplot(data=samples[samples$param == "lambda_i", ],
                    aes(x=value, y=district, fill = ..x.. )) +
-      geom_density_ridges_gradient(rel_min_height=0.025) +
+      ggridges::geom_density_ridges_gradient(rel_min_height=0.025) +
       geom_vline(xintercept=0.0036, color="grey20", linetype="dashed") +
       scale_x_log10(element_blank(),
                     breaks=c(0.0005, 0.001, 0.002, 0.005, 0.01, 0.02),
@@ -217,9 +219,9 @@ shinyServer(function(input, output) {
       scale_fill_distiller(guide = "none", palette="Reds", direction=1) +
       labs(title="Incidence / 1000 (log)") +
       th_density
-    panD <- ggplot(data=samples[param == "infections_i"],
+    panD <- ggplot(data=samples[samples$param == "infections_i", ],
                    aes(x=value, y=district, fill = ..x.. )) +
-      geom_density_ridges_gradient(rel_min_height=0.025) +
+      ggridges::geom_density_ridges_gradient(rel_min_height=0.025) +
       scale_x_log10(element_blank(), limits=c(50, 10000), labels=function(x) round(x)) +
       scale_y_discrete(element_blank()) +
       scale_fill_distiller(guide = "none", palette="Reds", direction=1) +
@@ -231,7 +233,7 @@ shinyServer(function(input, output) {
     # Produce table of outputs to view and download
     est <- summary(modelfit()$fit, c("rho_i", "alpha_i", "lambda_i", "infections_i"))$summary[, c("mean", "2.5%", "97.5%")]
     colnames(est) <- c("mean", "ci_l", "ci_u")
-    est <- data.table(param = rownames(est), est)
+    est <- data.frame(param = rownames(est), est)
     est$district_idx <- as.integer(sub(".*\\[([0-9]+)\\]", "\\1", est$param))
     est$district <- factor(values$mw$district[est$district_idx], values$data$district)
     est$region <- factor(values$mw$region[est$district_idx], c("Northern", "Central", "Southern"))

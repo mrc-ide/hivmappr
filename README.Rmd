@@ -27,8 +27,20 @@ Install the development version of `hivmappr` from [GitHub](https://github.com/)
 
 ``` r
 # install.packages("devtools")
-devtools::install_github("mrc-ide/hivmappr")
+devtools::install_github("mrc-ide/hivmappr@shiny")
 ```
+
+## Shiny interface
+
+After installation, to launch the shiny interface:
+
+``` r
+library(hivmappr)
+run_hivmappr()
+```
+
+This is still under development and presently simply shows a demo of the workflow.
+
 ## Example
 
 This is a basic example of an `hivmappr` workflow using simulated data from Malawi.
@@ -42,7 +54,7 @@ library(hivmappr)
 ```
 
 Load other packages for analysis.
-```{r load packages, results="hide"}
+```{r load packages, results="hide", message=FALSE}
 library(rgdal)
 library(magrittr)
 library(rstan)

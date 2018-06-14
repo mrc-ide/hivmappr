@@ -21,7 +21,9 @@ shinyUI(fluidPage(
              actionButton("loaddemo", "Load demo files")
              ),
     # Upload file
-    tabPanel("1. Upload shape files", fileInput("shapefile", "Upload shapefiles", multiple = TRUE)),
+    tabPanel("1. Upload shape files",
+             fileInput("shapefile", "Upload shapefiles", multiple = TRUE),
+             plotOutput("shapeoutline")),
     tabPanel("2. Upload data file (.csv)",
              p("You can either (A) copy and paste data into the spreadsheet below, or (B) you have the option of uploading a csv file containing the data."),
              strong("Option (A)"),
