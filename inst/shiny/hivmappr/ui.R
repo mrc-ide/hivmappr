@@ -24,7 +24,7 @@ shinyUI(fluidPage(
     tabPanel("1. Upload shape files",
              fileInput("shapefile", "Upload shapefiles", multiple = TRUE),
              plotOutput("shapeoutline")),
-    tabPanel("2. Upload data file (.csv)",
+    tabPanel("2. Input subnational data",
              p("You can either (A) copy and paste data into the spreadsheet below, or (B) you have the option of uploading a csv file containing the data."),
              strong("Option (A)"),
              tags$ol(
@@ -53,6 +53,8 @@ shinyUI(fluidPage(
     tabPanel("5. Visualize results",
              plotOutput("modelfitplot", width="90%"),
              plotOutput("densityplots", width="90%")),
+    tabPanel("sessionInfo()",
+             textOutput("sessioninfo")),
     widths=c(2,8)
   )
 ))

@@ -11,9 +11,10 @@ library(hivmappr)
 library(rstan)
 library(rhandsontable)
 library(rgdal)
+library(maps)
+library(mapproj)
 
 library(ggplot2)
-library(grid)
 library(gridExtra)
 
 library(shiny)
@@ -231,7 +232,7 @@ shinyServer(function(input, output) {
   }, res=50)
   output_table <- reactive({
     # Produce table of outputs to view and download
-    est <- summary(modelfit()$fit, c("rho_i", "alpha_i", "lambda_i", "infections_i"))$summary[, c("mean", "2.5%", "97.5%")]
+    est <- rstan::summary(modelfit()$fit, c("rho_i", "alpha_i", "lambda_i", "infections_i"))$summary[, c("mean", "2.5%", "97.5%")]
     colnames(est) <- c("mean", "ci_l", "ci_u")
     est <- data.frame(param = rownames(est), est)
     est$district_idx <- as.integer(sub(".*\\[([0-9]+)\\]", "\\1", est$param))
@@ -265,6 +266,7 @@ shinyServer(function(input, output) {
       write.csv(output_table(), file, row.names = FALSE)
     }
   )
+  output$sessioninfo <- renderPrint(sessionInfo())
 })
 
 

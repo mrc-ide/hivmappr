@@ -1,0 +1,10 @@
+name: hivmappr
+title:
+username:
+account: epidem
+server: shinyapps.io
+hostUrl: https://api.shinyapps.io/v1
+appId: 360959
+bundleId: 1430459
+url: https://epidem.shinyapps.io/hivmappr/
+when: 1529015146.65366
