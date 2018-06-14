@@ -92,7 +92,6 @@ shinyServer(function(input, output) {
   output$shapeoutline <- renderPlot({
     if (is.na(values$sh))
       return (print(ggplot()))
-    browser()
     mwpoly <- map_data(values$mw, namefield="district")
     ggplot(mwpoly, aes(long, lat, group = group)) +
       geom_polygon(col="black", fill=NA) +
