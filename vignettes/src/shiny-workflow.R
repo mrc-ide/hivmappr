@@ -4,7 +4,8 @@
 #'
 
 devtools::load_all()
-library(rgdal)
+library(sf)
+library(sp)
 library(magrittr)
 library(rstan)
 library(data.table)
@@ -19,7 +20,7 @@ library(gridExtra)
 #' ## 1. Upload shape file, generate a spreadsheet table to input data
 
 ## Shape file from DHS: https://spatialdata.dhsprogram.com/boundaries/#view=map&countryId=MW&surveyId=483&level=2
-sh <- readOGR(system.file("extdata", "mwsh", package="hivmappr"))
+sh <- read_sf(system.file("extdata", "mwsh", package="hivmappr")) %>% as_Spatial
 plot(sh)
 
 #' ## 2. Copy and paste data into spreadsheet

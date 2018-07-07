@@ -1,7 +1,7 @@
 Package: hivmappr
 Type: Package
 Title: Small-area estimation model for HIV prevalence, ART coverage, and incidence
-Version: 1.0.2
+Version: 1.0.3
 Date: 2018-04-29
 Author@R: c(person("Jeff", "Eaton", email = "jeffrey.eaton@imperial.ac.uk", role = c("aut", "cre")),
             person("Sumali", "Bajaj", role = "aut"),
@@ -24,7 +24,7 @@ Imports:
     shiny,
     abind,
     ggridges,
-    rgdal,
+    sf,
     reshape2
 LinkingTo:
     StanHeaders (>= 2.17.2),

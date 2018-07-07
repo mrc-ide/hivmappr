@@ -55,7 +55,8 @@ library(hivmappr)
 
 Load other packages for analysis.
 ```{r load packages, results="hide", message=FALSE}
-library(rgdal)
+library(sf)
+library(sp)
 library(magrittr)
 library(rstan)
 library(data.table)
@@ -71,7 +72,7 @@ library(gridExtra)
 Shapefile is from the [DHS Spatial Data Repository](https://spatialdata.dhsprogram.com/boundaries/#view=map&countryId=MW&surveyId=483&level=2).
 
 ```{r load shape file}
-sh <- readOGR(system.file("extdata", "mwsh", package="hivmappr"))
+sh <- read_sf(system.file("extdata", "mwsh", package="hivmappr")) %>% as_Spatial
 plot(sh)
 ```
 
@@ -166,19 +167,19 @@ th <- function(title)
 
 panA <- ggplot(est[param == "rho_i"], aes(map_id = district)) +
   scale_fill_distiller(element_blank(), palette="Purples", direction=1,
-                       lim=c(0, 0.25), labels=function(x) round(100*x)) +
+                       limits=c(0, 0.25), labels=function(x) round(100*x)) +
   th("Prevalence (%)")
 panB <- ggplot(est[param == "alpha_i"], aes(map_id = district)) +
   scale_fill_distiller(element_blank(), palette="Blues", direction=1,
-                       lim=c(0.3, 0.8), labels=function(x) round(100*x)) +
+                       limits=c(0.3, 0.8), labels=function(x) round(100*x)) +
   th("ART Coverage (%)")
 panC <- ggplot(est[param == "u_i"], aes(map_id = district)) +
   scale_fill_distiller(element_blank(), palette="PRGn", direction=1,
-                       lim=c(-0.2, 0.2)) +
+                       limits=c(-0.2, 0.2)) +
   th("u_i")
 panD <- ggplot(est[param == "lambda_i"], aes(map_id = district)) +
   scale_fill_distiller(element_blank(), palette="Reds", direction=1,
-                       lim=c(1, 8)/1e3, labels=function(x) round(1000*x)) +
+                       limits=c(1, 8)/1e3, labels=function(x) round(1000*x)) +
   th("Incidence / 1000")  
 
 grid.arrange(panA, panB, panC, panD, ncol=4)

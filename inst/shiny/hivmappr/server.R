@@ -10,7 +10,8 @@
 library(hivmappr)
 library(rstan)
 library(rhandsontable)
-library(rgdal)
+library(sf)
+library(sp)
 library(maps)
 library(mapproj)
 
@@ -21,7 +22,7 @@ library(shiny)
 
 
 ## Load demo data
-demo_sh <- rgdal::readOGR(system.file("extdata", "mwsh", package="hivmappr"))
+demo_sh <- sf::as_Spatial(sf::read_sf(system.file("extdata", "mwsh", package="hivmappr")))
 demo_csv <- read.csv(system.file("extdata", "mwdf.csv", package="hivmappr"))
 demo_mw <- merge(demo_sh, demo_csv)
 
@@ -60,7 +61,7 @@ shinyServer(function(input, output) {
       file.rename(input$shapefile$datapath[i],
                   paste0(temp_dir, "/", input$shapefile$name[i]))
     })
-    values$sh <- rgdal::readOGR(temp_dir)
+    values$sh <- sf::as_Spatial(sf::read_sf(temp_dir))
     values$mw <- merge(values$sh, values$csvdata)
     showNotification("Your shapefile data have been uploaded.", duration=5)
   })
