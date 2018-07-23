@@ -12,7 +12,7 @@ library(rhandsontable)
 
 # Define UI for application that draws a histogram
 shinyUI(fluidPage(
-  # App title ----
+  includeCSS("hivmappr.css"),
   titlePanel("hivmappr"),
   navlistPanel(
     tabPanel("0. Home",
@@ -22,8 +22,7 @@ shinyUI(fluidPage(
              ),
     # Upload file
     tabPanel("1. Upload shape files",
-             fileInput("shapefile", "Upload shapefiles", multiple = TRUE),
-             plotOutput("shapeoutline")),
+             fileInput("shapefile", "Upload shapefiles", multiple = TRUE)),
     tabPanel("2. Input subnational data",
              p("You can either (A) copy and paste data into the spreadsheet below, or (B) you have the option of uploading a csv file containing the data."),
              strong("Option (A)"),
@@ -39,19 +38,27 @@ shinyUI(fluidPage(
                        accept = c("text/csv", "text/comma-separated-values,text/plain", ".csv"))
              ),
     tabPanel("3. Visualize data", 
-             plotOutput("shapefileplot")),
+             fluidRow(column(8, leafletOutput("shapefileplot"), downloadButton("dlshapefileplot")),
+                      column(4, selectInput("Layers", "Choose a layer:",
+                                            list("pop15pl", "pop15to49", "prev_survey", "prev_survey_se", 
+                                                 "nsamp", "npos", "nrecent", "adultart",
+                                                 "anc_clients", "ancrt_n", "ancrt_pos", "ancrt_art"))))
+             ),
     tabPanel("4. Fit model",
              p("Click the button below to fit the model to your dataset. This may take a few minutes."),
              p("After the model fitting process has completed, you will see your data below and have the option to download it as a csv file."),
              p("Visualizations of the results will appear in Panel 5."),
-             actionButton("modelbutton", "Run model"), 
+             actionButton("modelbutton", "Run model"),
              br(),
              textOutput("modelfitprint"), 
              uiOutput("download"),
              tableOutput("results")
             ),
     tabPanel("5. Visualize results",
-             plotOutput("modelfitplot", width="90%"),
+             fluidRow(column(5, leafletOutput("estprevplot")), 
+                      column(5, leafletOutput("estartcoverageplot")),
+                      column(5, leafletOutput("estuiplot")),
+                      column(5, leafletOutput("estincidenceplot"))),
              plotOutput("densityplots", width="90%")),
     tabPanel("sessionInfo()",
              textOutput("sessioninfo")),

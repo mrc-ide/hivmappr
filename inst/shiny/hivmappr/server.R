@@ -14,31 +14,19 @@ library(sf)
 library(sp)
 library(maps)
 library(mapproj)
+library(dplyr)
 
 library(ggplot2)
 library(gridExtra)
-
 library(shiny)
+library(leaflet)
+library(mapview)
 
 
 ## Load demo data
 demo_sh <- sf::as_Spatial(sf::read_sf(system.file("extdata", "mwsh", package="hivmappr")))
 demo_csv <- read.csv(system.file("extdata", "mwdf.csv", package="hivmappr"))
 demo_mw <- merge(demo_sh, demo_csv)
-
-th_map <- function(title, polygons)
-  list(geom_map(aes(fill = value), map = polygons),
-       expand_limits(x = polygons$long, y = polygons$lat),
-       labs(x = NULL, y = NULL, title=title),
-       coord_map(),
-       theme(axis.ticks = element_blank(),
-             axis.text = element_blank(),
-             panel.background = element_blank(),
-             panel.border = element_blank(),
-             legend.position=c(1, 1),
-             legend.justification=c(0.5, 1),
-             legend.background = element_rect(fill = NA),
-             plot.title=element_text(hjust=0.5, face="bold")))
 
 th_density <- list(theme_minimal(),
                    theme(plot.title=element_text(hjust=0.5, face="bold"),
@@ -105,48 +93,68 @@ shinyServer(function(input, output) {
             panel.background = element_blank(),
             panel.border = element_blank())
   })
-  output$shapefileplot <- renderPlot({
+  shapefileplot_leaflet <- reactive({
     if (is.na(values$sh)) return (print(ggplot()))
-    showNotification("Please wait while figure(s) load.", duration=5)
-    mwpoly <- map_data(values$mw, namefield="district")
-    data_varnames <- names(values$mw@data)[!(names(values$mw@data) %in% c("district", "region", "zone"))]
-    plots <- lapply(data_varnames, function (varname) {
-      plotdata <- values$mw@data[, c("district", varname)]
-      names(plotdata)[2] <- "value"
-      ggplot(plotdata, aes(map_id = district)) +
-        scale_fill_distiller(element_blank(), palette="Blues", direction=1) +
-        th_map(varname, mwpoly)
-    })
-    names(plots) <- data_varnames
-    print(plots[[1]])
+    var_x <- input$Layers
+    geo_vars <- c("district", "region", "zone")
+    plot_layer <- paste0('~colorQuantile("Blues", ', var_x,')(', var_x,')')
+    values$mw$mouseover_labels <- paste0(values$mw$district, ":\n", values$mw[[var_x]])
+    leaflet(values$mw) %>% 
+      addPolygons(color="white", opacity=0.5, weight=1,
+                  fillColor=eval(parse(text=plot_layer)), fillOpacity=1.0, 
+                  highlightOptions=highlightOptions(color="blue", bringToFront = TRUE, sendToBack=TRUE),
+                  label=~mouseover_labels) %>%
+      addLegend("topright", pal=colorNumeric("Blues", domain=values$mw[[var_x]], reverse=TRUE),
+                values=eval(parse(text=paste0("~", var_x))),
+                title=var_x, opacity=0.8,
+                labFormat = labelFormat(transform = function(x) sort(x, decreasing = TRUE)))
   })
-  ## 2. Fit stan model
+  output$shapefileplot <- renderLeaflet({
+    shapefileplot_leaflet()
+  })
+  shapefileplot_for_download <- reactive({
+    shapefileplot_leaflet() %>%
+      setView( lng = input$map_center$lng,lat = input$map_center$lat, zoom = input$map_zoom)
+  })
+  output$dlshapefileplot <- downloadHandler(
+    filename = paste0("shapefile_", input$Layers, ".pdf"
+    ), 
+    content = function(file) {
+      mapshot( x = shapefileplot_for_download(), file = file,
+               cliprect = "viewport" # the clipping rectangle matches the height & width from the viewing port
+               , selfcontained = FALSE # when this was not specified, the function for produced a PDF of two pages: one of the leaflet map, the other a blank page.
+      )
+    }
+  ) 
+  ## 4. Fit stan model
   modelfit <- eventReactive(input$modelbutton, {
     values$data <- with(values$mw@data, list(N_reg = length(district),
-                                      district = district,
-                                      prev_est = prev_survey,
-                                      prev_se = prev_survey_se,
-                                      anc1_obs = cbind(ancrt_neg = ancrt_n - ancrt_pos,
-                                                       ancrt_noart=ancrt_pos - ancrt_art,
-                                                       ancrt_art=ancrt_art),
-                                      P_i = npos,
-                                      R_i = nrecent,
-                                      pop15pl_i = pop15pl,
-                                      pop15to49_i = pop15to49,
-                                      art15pl_i = adultart,
-                                      prev_ratio = 1.06,
-                                      OmegaT0 = 130 / 365,
-                                      sigma_OmegaT = ((142-118)/365)/(2*qnorm(0.975)),
-                                      betaT0 = 0.0,
-                                      sigma_betaT = 0.00001,
-                                      omega = 0.7,
-                                      T = 1.0,
-                                      Nkappa = 1,
-                                      Xkappa = matrix(10, length(district), 1),
-                                      sigma_u_sd = 1))
+                                             district = district,
+                                             prev_est = prev_survey,
+                                             prev_se = prev_survey_se,
+                                             anc1_obs = cbind(ancrt_neg = ancrt_n - ancrt_pos,
+                                                              ancrt_noart=ancrt_pos - ancrt_art,
+                                                              ancrt_art=ancrt_art),
+                                             P_i = npos,
+                                             R_i = nrecent,
+                                             pop15pl_i = pop15pl,
+                                             pop15to49_i = pop15to49,
+                                             art15pl_i = adultart,
+                                             prev_ratio = 1.06,
+                                             OmegaT0 = 130 / 365,
+                                             sigma_OmegaT = ((142-118)/365)/(2*qnorm(0.975)),
+                                             betaT0 = 0.0,
+                                             sigma_betaT = 0.00001,
+                                             omega = 0.7,
+                                             T = 1.0,
+                                             Nkappa = 1,
+                                             Xkappa = matrix(10, length(district), 1),
+                                             sigma_u_sd = 1))
     showNotification("Starting model fitting process... This message will automatically disappear once fitting has completed.",
                      duration=NULL, id="modelfitnotification")
-    fit <- sampling(hivmappr:::stanmodels$incidence_rita, data=values$data, control = list(adapt_delta = 0.95))
+    fit <- sampling(hivmappr:::stanmodels$incidence_rita,
+                    data=values$data,
+                    control = list(adapt_delta = 0.95))
     est <- summary(fit, c("rho_i", "alpha_i", "u_i", "lambda_i", "infections_i"))$summary[, "mean"]
     est <- data.frame(param = names(est), value=est)
     est$district_idx <- as.integer(sub(".*\\[([0-9]+)\\]", "\\1", est$param))
@@ -168,28 +176,86 @@ shinyServer(function(input, output) {
     A <- modelfit()
     ""
   })
-  output$modelfitplot <- renderPlot({
+  estprevplot_leaflet <- reactive({
     estimates <- modelfit()$estimates
-    ## Extract map polygon data 
-    mwpoly <- map_data(values$mw, namefield="district")
-    panA <- ggplot(estimates[estimates$param == "rho_i", ], aes(map_id = district)) +
-      scale_fill_distiller(element_blank(), palette="Purples", direction=1,
-                           lim=c(0, 0.25), labels=function(x) round(100*x)) +
-      th_map("Prevalence (%)", mwpoly)
-    panB <- ggplot(estimates[estimates$param == "alpha_i", ], aes(map_id = district)) +
-      scale_fill_distiller(element_blank(), palette="Blues", direction=1,
-                           lim=c(0.3, 0.8), labels=function(x) round(100*x)) +
-      th_map("ART Coverage (%)", mwpoly)
-    panC <- ggplot(estimates[estimates$param == "u_i", ], aes(map_id = district)) +
-      scale_fill_distiller(element_blank(), palette="PRGn", direction=1,
-                           lim=c(-0.2, 0.2)) +
-      th_map("u_i", mwpoly)
-    panD <- ggplot(estimates[estimates$param == "lambda_i", ], aes(map_id = district)) +
-      scale_fill_distiller(element_blank(), palette="Reds", direction=1,
-                           lim=c(1, 8)/1e3, labels=function(x) round(1000*x)) +
-      th_map("Incidence / 1000", mwpoly)
-    grid.arrange(panA, panB, panC, panD, ncol=4)
-  }, res=50)
+    mw_object <- values$mw
+    mw_object@data <- full_join(mw_object@data, estimates[estimates$param == "rho_i",], by="district")
+    plot_layer <- '~colorNumeric("Purples", c(0, 0.25))(value)'
+    mw_object@data$mouseover_labels <- 
+      paste0(mw_object@data$district, ":\n", round(mw_object@data$value*100), "%")
+    leaflet(mw_object) %>%
+      addPolygons(color="white", opacity=0.5, weight=1,
+                  fillColor=eval(parse(text=plot_layer)), fillOpacity=1.0, 
+                  highlightOptions=highlightOptions(color="blue", bringToFront = TRUE, sendToBack=TRUE),
+                  label=~mouseover_labels) %>%
+      addLegend("topright", pal=colorNumeric("Purples", domain=c(0, 0.25), reverse=TRUE),
+                values=c(0, 0.25),
+                title="Prevalence (%)", opacity=0.8,
+                labFormat = labelFormat(transform = function(x) sort(round(100*x), decreasing = TRUE)))
+  })
+  output$estprevplot <- renderLeaflet({
+    estprevplot_leaflet()
+  })
+  estartcoverageplot_leaflet <- reactive({
+    estimates <- modelfit()$estimates
+    mw_object <- values$mw
+    mw_object@data <- full_join(mw_object@data, estimates[estimates$param=="alpha_i",], by="district")
+    plot_layer <- '~colorNumeric("Blues", c(0.3, 0.8))(value)'
+    mw_object@data$mouseover_labels <- 
+      paste0(mw_object@data$district, ":\n", round(mw_object@data$value*100), "%")
+    leaflet(mw_object) %>%
+      addPolygons(color="white", opacity=0.5, weight=1,
+                  fillColor=eval(parse(text=plot_layer)), fillOpacity=1.0, 
+                  highlightOptions=highlightOptions(color="blue", bringToFront = TRUE, sendToBack=TRUE),
+                  label=~mouseover_labels) %>%
+      addLegend("topright", pal=colorNumeric("Blues", domain=c(0.3, 0.8), reverse=TRUE),
+                values=c(0.3, 0.8),
+                title="ART Coverage (%)", opacity=0.8,
+                labFormat = labelFormat(transform = function(x) sort(round(100*x), decreasing = TRUE)))
+  })
+  output$estartcoverageplot <- renderLeaflet({
+    estartcoverageplot_leaflet()
+  })
+  estuiplot_leaflet <- reactive({
+    estimates <- modelfit()$estimates
+    mw_object <- values$mw
+    mw_object@data <- full_join(mw_object@data, estimates[estimates$param=="u_i",], by="district")
+    plot_layer <- '~colorNumeric("PRGn", c(-0.2, 0.2))(value)'
+    mw_object@data$mouseover_labels <- 
+      paste0(mw_object@data$district, ":\n", mw_object@data$value)
+    leaflet(mw_object) %>%
+      addPolygons(color="white", opacity=0.5, weight=1,
+                  fillColor=eval(parse(text=plot_layer)), fillOpacity=1.0, 
+                  highlightOptions=highlightOptions(color="blue", bringToFront = TRUE, sendToBack=TRUE),
+                  label=~mouseover_labels) %>%
+      addLegend("topright", pal=colorNumeric("PRGn", domain=c(-0.2, 0.2), reverse=TRUE),
+                values=c(-0.2, 0.2),
+                title="u_i", opacity=0.8,
+                labFormat = labelFormat(transform = function(x) sort(x, decreasing = TRUE)))
+  })
+  output$estuiplot <- renderLeaflet({
+    estuiplot_leaflet()
+  })
+  estincidenceplot_leaflet <- reactive({
+    estimates <- modelfit()$estimates
+    mw_object <- values$mw
+    mw_object@data <- full_join(mw_object@data, estimates[estimates$param=="lambda_i",], by="district")
+    plot_layer <- '~colorNumeric("Reds", c(1, 8)/1e3)(value)'
+    mw_object@data$mouseover_labels <- 
+      paste0(mw_object@data$district, ":\n", round(1000*mw_object@data$value))
+    leaflet(mw_object) %>%
+      addPolygons(color="white", opacity=0.5, weight=1,
+                  fillColor=eval(parse(text=plot_layer)), fillOpacity=1.0, 
+                  highlightOptions=highlightOptions(color="blue", bringToFront = TRUE, sendToBack=TRUE),
+                  label=~mouseover_labels) %>%
+      addLegend("topright", pal=colorNumeric("Reds", domain=c(1, 8)/1e3, reverse=TRUE),
+                values=c(1, 8)/1e3,
+                title="Incidence / 1000", opacity=0.8,
+                labFormat = labelFormat(transform = function(x) sort(round(1000*x), decreasing = TRUE)))
+  })
+  output$estincidenceplot <- renderLeaflet({
+    estincidenceplot_leaflet()
+  })
   output$densityplots <- renderPlot({
     samples <- modelfit()$samples
     panA <- ggplot(data=samples[samples$param == "rho_i", ],
@@ -267,7 +333,7 @@ shinyServer(function(input, output) {
       write.csv(output_table(), file, row.names = FALSE)
     }
   )
-  output$sessioninfo <- renderPrint(sessionInfo())
+  output$sessioninfo <- renderPrint(capture.output(sessionInfo()))
 })
 
 
