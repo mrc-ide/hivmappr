@@ -9,6 +9,7 @@
 
 library(shiny)
 library(rhandsontable)
+library(leaflet)
 
 # Define UI for application that draws a histogram
 shinyUI(fluidPage(
@@ -49,19 +50,21 @@ shinyUI(fluidPage(
              p("After the model fitting process has completed, you will see your data below and have the option to download it as a csv file."),
              p("Visualizations of the results will appear in Panel 5."),
              actionButton("modelbutton", "Run model"),
+             verbatimTextOutput("stanprogress"),
              br(),
              textOutput("modelfitprint"), 
              uiOutput("download"),
-             tableOutput("results")
+             tableOutput("results_table")
             ),
     tabPanel("5. Visualize results",
-             fluidRow(column(5, leafletOutput("estprevplot")), 
-                      column(5, leafletOutput("estartcoverageplot")),
-                      column(5, leafletOutput("estuiplot")),
-                      column(5, leafletOutput("estincidenceplot"))),
-             plotOutput("densityplots", width="90%")),
-    tabPanel("sessionInfo()",
-             textOutput("sessioninfo")),
+             selectInput("Results", "Show estimates of:", 
+                                         as.list(c("Prevalence (%)", "ART Coverage (%)", 
+                                                   "u_i", "Incidence (per 1000)", 
+                                                   "New infections"))),
+             fluidRow(column(7, leafletOutput("estplot")),
+                      column(5, plotOutput("densityplot", width="90%"))
+                      )),
+    tabPanel("sessionID()", pre(id="infoconsole")),
     widths=c(2,8)
   )
 ))
