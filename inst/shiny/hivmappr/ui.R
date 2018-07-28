@@ -50,7 +50,6 @@ shinyUI(fluidPage(
              p("After the model fitting process has completed, you will see your data below and have the option to download it as a csv file."),
              p("Visualizations of the results will appear in Panel 5."),
              actionButton("modelbutton", "Run model"),
-             verbatimTextOutput("stanprogress"),
              br(),
              textOutput("modelfitprint"), 
              uiOutput("download"),

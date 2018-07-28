@@ -27,8 +27,6 @@ library(mapview)
 demo_sh <- sf::as_Spatial(sf::read_sf(system.file("extdata", "mwsh", package="hivmappr")))
 demo_csv <- read.csv(system.file("extdata", "mwdf.csv", package="hivmappr"))
 demo_mw <- merge(demo_sh, demo_csv)
-logfile <- "myfile.txt"#tempfile()
-cat("Tracking Stan progress\n", file=logfile)
 result_titles <- data.frame(label=c("Prevalence (%)", "ART Coverage (%)", "u_i", "Incidence (per 1000)", "New infections"),
                             var=c("rho_i", "alpha_i", "u_i", "lambda_i", "infections_i"),
                             palette=c("Purples", "Blues", "PRGn", "Reds", "Reds"),
@@ -188,12 +186,9 @@ shinyServer(function(input, output) {
                                              sigma_u_sd = 1))
     showNotification("Starting model fitting process... This message will automatically disappear once fitting has completed.",
                      duration=NULL, id="modelfitnotification")
-    
-    sink(logfile, append=TRUE, split=FALSE)
     fit <- sampling(hivmappr:::stanmodels$incidence_rita,
                   data=values$data,
                   control = list(adapt_delta = 0.95))
-    sink()
     est <- summary(fit, c("rho_i", "alpha_i", "u_i", "lambda_i", "infections_i"))$summary[, "mean"]
     est <- data.frame(param = names(est), value=est)
     est$district_idx <- as.integer(sub(".*\\[([0-9]+)\\]", "\\1", est$param))
@@ -210,21 +205,6 @@ shinyServer(function(input, output) {
     samp$param <- sub("([^\\[]+).*", "\\1", samp$param)
     removeNotification("modelfitnotification")
     list(fit=fit, estimates=est, samples=samp)
-  })
-  observe({
-    invalidateLater(50, NULL)
-    req(file.exists(logfile))
-    modified <- file.info(logfile)$mtime
-    imported <- values$imported
-    if(!identical(imported, modified)){
-      values$stanlogtext <- readLines(logfile)
-    }
-  })
-  #fileReaderData <- reactiveFileReader(1000, NULL, filePath=logfile, readFunc=readLines)
-  output$stanprogress <- renderText({
-    text <- values$stanlogtext
-    text[is.na(text)] <- ""
-    paste(text, collapse = '\n')
   })
   output$modelfitprint <- renderText({
     A <- modelfit()
@@ -338,4 +318,12 @@ shinyServer(function(input, output) {
 # - add data checks
 # - add 'Click here to visualize uploaded data'
 # - add MRC logo
+
+# - people upload shapefiles - select variables. on panel 1: add dropdown menu that says pick
+# shapefile that corresponds. force the names for datafiles
+# - people select other admin levels to visualize
+# - when uploading shapefile, populate table automatically
+# - populate table when uploading csv file
+# - Visualize data - bar plots of prevalence by districts/regions
+# 2 versions of models
 
