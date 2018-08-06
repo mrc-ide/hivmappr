@@ -22,7 +22,6 @@ library(shiny)
 library(leaflet)
 library(mapview)
 
-
 ## Load demo data
 demo_sh <- sf::as_Spatial(sf::read_sf(system.file("extdata", "mwsh", package="hivmappr")))
 demo_csv <- read.csv(system.file("extdata", "mwdf.csv", package="hivmappr"))
@@ -62,13 +61,17 @@ withConsoleRedirect <- function(containerId, expr) {
 }
 
 shinyServer(function(input, output) {
-  values <- reactiveValues(sh=NA, csvdata=NA, mw=NA, data=NA, 
-                           imported=file.info(logfile)$mtime,
-                           stanlogtext=readLines(logfile)[[1]])
+  values <- reactiveValues(sh=NA, csvdata=NA, mw=NA, data=NA,
+                           use_demo_sh=FALSE, use_demo_csvdata=FALSE,
+                           initshapefileplot=NA, shapefileplot=NA, 
+                           prefix="demo", 
+                           shapefileplot_dl_flat=0,
+                           estplot_dl_flat=0)
   ## 1. Read in data
   # Read in shapefile
   observeEvent(input$shapefile, {
     if (is.null(input$shapefile)) temp <- 0
+    values$use_demo_sh <- FALSE
     temp_dir <- tempdir()
     # Move uploaded shapefiles to directory
     mv_files <- lapply(1:nrow(input$shapefile), function (i) {
@@ -76,13 +79,30 @@ shinyServer(function(input, output) {
                   paste0(temp_dir, "/", input$shapefile$name[i]))
     })
     values$sh <- sf::as_Spatial(sf::read_sf(temp_dir))
+    values$prefix <- strsplit(basename(input$shapefile$datapath), ".")[[1]][1]
     values$mw <- merge(values$sh, values$csvdata)
-    showNotification("Your shapefile data have been uploaded.", duration=5)
+    showNotification("Your shapefile data have been uploaded.", duration=3)
+  })
+  output$initshapefileplotdemo <- renderLeaflet({
+    if (is.na(values$sh)) return (leaflet())
+    if (!values$use_demo_sh) return (leaflet())
+    leaflet(values$sh) %>% 
+      addPolygons(color="black", weight=1, fillColor="blue")
+  })
+  output$initshapefileplot <- renderLeaflet({
+    if (is.na(values$sh)) return (leaflet())
+    if (values$use_demo_sh) return (leaflet())
+    leaflet(values$sh) %>% 
+      addPolygons(color="black", weight=1, fillColor="blue")
   })
   observeEvent(input$csv, {
     values$csvdata <- read.csv(input$csv$datapath)
+    values$use_demo_csvdata <- FALSE
     values$mw <- merge(values$sh, values$csvdata)
-    showNotification("Your csv data have been uploaded.", duration=5)
+    showNotification("Your csv data have been uploaded.", duration=10)
+    output$hot <- renderRHandsontable({
+      rhandsontable(values$csvdata, readOnly=FALSE)
+    })
   })
   ## Handsontable
   output$hot <- renderRHandsontable({
@@ -95,6 +115,7 @@ shinyServer(function(input, output) {
   })
   observeEvent(input$save, {
     showNotification("Your pasted data table has been saved", duration=5)
+    values$use_demo_csvfile <- FALSE
     values$csvdata <- hot_to_r(input$hot)
     values$mw <- merge(values$sh, values$csvdata)
   })
@@ -102,9 +123,16 @@ shinyServer(function(input, output) {
   observeEvent(input$loaddemo, {
     # If the user selects the demo option, then the data in the hivmappr package are used
     showNotification("Demo shapefiles loaded.", duration=5)
+    values$use_demo_sh <- values$use_demo_csvdata <- TRUE
     values$mw <- demo_mw
     values$sh <- demo_sh
     values$csvdata <- demo_csv
+  })
+  output$initcsvfile <- renderTable({
+    if (is.na(values$csvdata)) data.frame()
+    if (is.na(values$use_demo_csvdata)) data.frame()
+    if (!values$use_demo_csvdata) data.frame()
+    head(values$csvdata)
   })
   output$shapeoutline <- renderPlot({
     if (is.na(values$sh))
@@ -120,7 +148,7 @@ shinyServer(function(input, output) {
             panel.border = element_blank())
   })
   shapefileplot_leaflet <- reactive({
-    if (is.na(values$sh)) return (print(ggplot()))
+    if (is.na(values$sh)) return (leaflet())
     var_x <- input$Layers
     geo_vars <- c("district", "region", "zone")
     plot_layer <- paste0('~colorQuantile("Blues", ', var_x,')(', var_x,')')
@@ -133,7 +161,7 @@ shinyServer(function(input, output) {
     if (discrete_test) {
       colorFunc <- colorFactor
     }
-    leaflet(values$mw) %>% 
+    values$shapefileplot <- leaflet(values$mw) %>% 
       addPolygons(color="white", opacity=0.5, weight=1,
                   fillColor=eval(parse(text=plot_layer)), fillOpacity=1.0, 
                   highlightOptions=highlightOptions(color="blue", bringToFront = TRUE, sendToBack=TRUE),
@@ -151,15 +179,42 @@ shinyServer(function(input, output) {
       setView( lng = input$map_center$lng,lat = input$map_center$lat, zoom = input$map_zoom)
   })
   output$dlshapefileplot <- downloadHandler(
-    filename = paste0("shapefile_", input$Layers, ".pdf"
-    ), 
+    filename = function () {
+      paste0(values$prefix, "_data_", input$Layers, "_map.pdf")
+    }, 
     content = function(file) {
-      mapshot( x = shapefileplot_for_download(), file = file,
+      values$shapefileplot_dl_flat <- values$shapefileplot_dl_flat + 1
+      if (values$shapefileplot_dl_flat > 0) {
+        showNotification(paste0(values$prefix, "_data_", input$Layers, "_map.pdf is being downloaded. It may take a few seconds."), duration=5)
+      }
+      mapshot( x = values$shapefileplot, file = file,
                cliprect = "viewport" # the clipping rectangle matches the height & width from the viewing port
                , selfcontained = FALSE # when this was not specified, the function for produced a PDF of two pages: one of the leaflet map, the other a blank page.
       )
     }
-  ) 
+  )
+  databarsplot <- reactive({
+    selected_column <- input$Layers
+    Plotsubset <- values$mw@data[, c("district", selected_column)]
+    names(Plotsubset)[2] <- "values"
+    Plotsubset$district <- factor(Plotsubset$district)
+    ggplot(Plotsubset) +
+      geom_bar(aes(x=district, y=values), stat="identity") +
+      xlab("Districts") +
+      ylab(selected_column) +
+      theme_minimal() +
+      scale_x_discrete(limits = rev(levels(Plotsubset$district)))
+      coord_flip()
+  })
+  output$visualizedatabars <- renderPlot({
+    databarsplot()
+  })
+  output$dlbars <- downloadHandler(filename=function(){
+    paste0(values$prefix, "_data_", input$Layers, "_plot.pdf")
+  },
+  content=function(file) {
+    ggsave(file, databarsplot(), width=10, height=3.5)
+  })
   ## 4. Fit stan model
   modelfit <- eventReactive(input$modelbutton, {
     values$data <- with(values$mw@data, list(N_reg = length(district),
@@ -247,7 +302,7 @@ shinyServer(function(input, output) {
     }
   )
   # Visualize results
-  estplot_leaflet <- reactive({
+  values$estplot_leaflet <- reactive({
     estimates <- modelfit()$estimates
     mw_object <- values$mw
     plotting_params <- filter(result_titles, label==input$Results)
@@ -277,9 +332,24 @@ shinyServer(function(input, output) {
                 }))
   })
   output$estplot <- renderLeaflet({
-    estplot_leaflet()
+    values$estplot_leaflet()
   })
-  output$densityplot <- renderPlot({
+  output$downloadestplot <- downloadHandler(
+    filename = function () {
+      paste0(values$prefix, "_", input$Results, "_map.pdf")
+    }, 
+    content = function(file) {
+      values$estplot_dl_flat <- values$estplot_dl_flat + 1
+      if (values$estplot_dl_flat > 0) {
+        showNotification(paste0(values$prefix, "_", input$Results, "_map.pdf is being downloaded. It may take a few seconds."), duration=5)
+      }
+      mapshot( x = values$estplot_leaflet, file = file,
+               cliprect = "viewport" # the clipping rectangle matches the height & width from the viewing port
+               , selfcontained = FALSE # when this was not specified, the function for produced a PDF of two pages: one of the leaflet map, the other a blank page.
+      )
+    }
+  )
+  values$densityplot <- reactive({
     samples <- modelfit()$samples
     plotting_params <- filter(result_titles, label==input$Results)
     variable <- plotting_params$var
@@ -301,7 +371,21 @@ shinyServer(function(input, output) {
       labs(title=input$Results) +
       th_density + theme(axis.text.y=element_text(hjust=1))
     Plot
+  })
+  output$densityplot <- renderPlot({
+    values$densityplot()
   }, res=50)
+  output$downloaddensityplot <- downloadHandler(
+    filename=function () {
+      paste0(values$prefix, "_", input$Results, "_density.pdf")
+    },
+    content = function (con) {
+      if (values$estplot_dl_flat > 0) {
+        showNotification(paste0(values$prefix, "_", input$Results, "_density.pdf is being downloaded. It may take a few seconds."), duration=5)
+      }
+      ggsave(con, values$densityplot(), width=5, height=9)
+    }
+  )
   # Session info
   observe({
     withConsoleRedirect("infoconsole", {
@@ -313,17 +397,14 @@ shinyServer(function(input, output) {
 ## TO DO:
 # - add download button to Visualize Result panel
 # - add download all button
-# - work out how to export map
 # - display progress bar for R stan or print console output to ui.R
 # - add data checks
-# - add 'Click here to visualize uploaded data'
 # - add MRC logo
 
 # - people upload shapefiles - select variables. on panel 1: add dropdown menu that says pick
 # shapefile that corresponds. force the names for datafiles
 # - people select other admin levels to visualize
-# - when uploading shapefile, populate table automatically
-# - populate table when uploading csv file
 # - Visualize data - bar plots of prevalence by districts/regions
 # 2 versions of models
+# load demo results
 
