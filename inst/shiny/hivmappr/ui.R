@@ -19,11 +19,15 @@ shinyUI(fluidPage(
     tabPanel("0. Home",
              p("If you are interested in testing this app, press the button below to load demo data. You can skip steps 1 and 2 listed in the panel on the left."),
              p("Otherwise, upload your own shapefiles (panel 1) and csv file containing the data (panel 2)."),
-             actionButton("loaddemo", "Load demo files")
+             actionButton("loaddemo", "Load demo files"),
+             fluidRow(column(6, leafletOutput("initshapefileplotdemo")),
+                      column(6, tableOutput("initcsvfile")))
              ),
     # Upload file
     tabPanel("1. Upload shape files",
-             fileInput("shapefile", "Upload shapefiles", multiple = TRUE)),
+             fileInput("shapefile", "Upload shapefiles", multiple = TRUE),
+             fluidRow(column(6, leafletOutput("initshapefileplot")))
+             ),
     tabPanel("2. Input subnational data",
              p("You can either (A) copy and paste data into the spreadsheet below, or (B) you have the option of uploading a csv file containing the data."),
              strong("Option (A)"),
@@ -33,14 +37,19 @@ shinyUI(fluidPage(
                tags$li("Select the first cell in the spreadsheet."),
                tags$li("Paste data by pressing ctrl+v or cmd+v.")
              ),
-             actionButton("save", "Save data"),
+             actionButton("save", "Save data for next steps"),
              rHandsontableOutput("hot"),
+             br(),
+             strong("Option (B)"),
              fileInput("csv", "Upload csv file", multiple = FALSE,
                        accept = c("text/csv", "text/comma-separated-values,text/plain", ".csv"))
              ),
     tabPanel("3. Visualize data", 
-             fluidRow(column(8, leafletOutput("shapefileplot"), downloadButton("dlshapefileplot")),
-                      column(4, selectInput("Layers", "Choose a layer:",
+             fluidRow(column(10, leafletOutput("shapefileplot"), 
+                             downloadButton("dlshapefileplot", "Download map"),
+                             plotOutput("visualizedatabars"),
+                             downloadButton("dlbars", "Download plot")),
+                      column(2, selectInput("Layers", "Choose a layer:",
                                             list("pop15pl", "pop15to49", "prev_survey", "prev_survey_se", 
                                                  "nsamp", "npos", "nrecent", "adultart",
                                                  "anc_clients", "ancrt_n", "ancrt_pos", "ancrt_art"))))
@@ -62,7 +71,10 @@ shinyUI(fluidPage(
                                                    "New infections"))),
              fluidRow(column(7, leafletOutput("estplot")),
                       column(5, plotOutput("densityplot", width="90%"))
-                      )),
+                      ),
+             fluidRow(column(7, downloadButton("downloadestplot", "Download map")),
+                      column(5, downloadButton("downloaddensityplot", "Download estimate densities"))
+             )),
     tabPanel("sessionID()", pre(id="infoconsole")),
     widths=c(2,8)
   )
