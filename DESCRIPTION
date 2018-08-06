@@ -17,9 +17,9 @@ Depends:
     mapproj,
     ggplot2,
     ggridges,
-    gridExtra
-    leaflet
-    mapview
+    gridExtra,
+    leaflet,
+    mapview,
     dplyr
 Imports:
     rstan (>= 2.17.3),
