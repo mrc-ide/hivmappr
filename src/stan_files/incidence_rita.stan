@@ -1,18 +1,27 @@
 data {
+
   int N_reg;
 
-  // survey
-  vector[N_reg] prev_est;
-  vector[N_reg] prev_se;
-
-  int anc1_obs[N_reg, 3];
-
-  int P_i[N_reg];
-  int R_i[N_reg];
   vector[N_reg] pop15pl_i;
   vector[N_reg] pop15to49_i;
   vector[N_reg] art15pl_i;
   real prev_ratio;  // ratio of age 15+ prevalence to age 15-49 prevalence
+
+  // survey prevalence
+  int Nobs_prev;               // Number of observations
+  int idx_prev[Nobs_prev];     // region index
+  vector[Nobs_prev] prev_est;
+  vector[Nobs_prev] prev_se;
+
+  // routine ANC testing
+  int anc1_obs[N_reg, 3];
+
+  // recent infection testing
+  int Nobs_rec;
+  int idx_rec[Nobs_rec];
+  int P_i[Nobs_rec];
+  int R_i[Nobs_rec];
+
   //
   real OmegaT0;
   real sigma_OmegaT;
@@ -31,8 +40,8 @@ data {
 
 }
 transformed data {
-  vector[N_reg] l_prev_est;
-  vector[N_reg] l_prev_se;
+  vector[Nobs_prev] l_prev_est;
+  vector[Nobs_prev] l_prev_se;
   vector[N_reg] prop_art_i; // proportion on ART, lower bound for prevalence based on constraint prev_i * prev_ratio > art_i / pop15pl_i;
 
   l_prev_est = logit(prev_est);
@@ -89,11 +98,12 @@ transformed parameters{
   alpha_anc_i = inv_logit(l_alpha_i + l_alpha_ancbias_i);
 }
 model {
+
   vector[N_reg] kappa_i;
   vector[N_reg] pR;
 
 
-    // priors
+  // priors
 
   l_rho0 ~ normal(-2, 5);
   sigma_l_rho ~ normal(0, 2.5);
@@ -114,7 +124,7 @@ model {
   
 
   // prevalence likelihood
-  l_prev_est ~ normal(l_rho_i, l_prev_se);
+  l_prev_est ~ normal(l_rho_i[idx_prev], l_prev_se);
 
   // ART data likelihood
   target += log(prop_art_i) - log1m(alpha_i); // propart -> l_alpha
@@ -142,7 +152,7 @@ model {
 
   kappa_i = exp(Xkappa * kappa + log1m(omega*alpha_i) + u_i);
   pR =  kappa_i .* (1-rho_i) * (OmegaT - betaT*T) + betaT;
-  R_i ~ binomial(P_i, pR);
+  R_i ~ binomial(P_i, pR[idx_rec]);
 }
 generated quantities {
   vector[N_reg] lambda_i;

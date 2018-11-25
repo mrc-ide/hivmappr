@@ -1,18 +1,20 @@
 data {
+
   int N_reg;
 
-  // survey
-  vector[N_reg] prev_est;
-  vector[N_reg] prev_se;
-
-  int anc1_obs[N_reg, 3];
-
-  int P_i[N_reg];
-  int R_i[N_reg];
   vector[N_reg] pop15pl_i;
   vector[N_reg] pop15to49_i;
   vector[N_reg] art15pl_i;
   real prev_ratio;  // ratio of age 15+ prevalence to age 15-49 prevalence
+
+  // survey prevalence
+  int Nobs_prev;               // Number of observations
+  int idx_prev[Nobs_prev];     // region index
+  vector[Nobs_prev] prev_est;
+  vector[Nobs_prev] prev_se;
+
+  // routine ANC testing
+  int anc1_obs[N_reg, 3];
   //
   real omega;
 
