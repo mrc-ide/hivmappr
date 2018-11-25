@@ -13,6 +13,12 @@ data {
   vector[Nobs_prev] prev_est;
   vector[Nobs_prev] prev_se;
 
+  // survey ART coverage
+  int Nobs_arv;               // Number of observations
+  int idx_arv[Nobs_arv];      // region index
+  vector[Nobs_arv] arv_est;
+  vector[Nobs_arv] arv_se;
+
   // routine ANC testing
   int anc1_obs[N_reg, 3];
 
@@ -40,13 +46,20 @@ data {
 
 }
 transformed data {
+
+  vector[N_reg] prop_art_i; // proportion on ART, lower bound for prevalence based on constraint prev_i * prev_ratio > art_i / pop15pl_i;
+  
   vector[Nobs_prev] l_prev_est;
   vector[Nobs_prev] l_prev_se;
-  vector[N_reg] prop_art_i; // proportion on ART, lower bound for prevalence based on constraint prev_i * prev_ratio > art_i / pop15pl_i;
+  vector[Nobs_arv] l_arv_est;
+  vector[Nobs_arv] l_arv_se;
 
+  prop_art_i = art15pl_i ./ (prev_ratio * pop15pl_i);
   l_prev_est = logit(prev_est);
   l_prev_se = prev_se ./ (prev_est .* (1 - prev_est));
-  prop_art_i = art15pl_i ./ (prev_ratio * pop15pl_i);
+  l_arv_est = logit(arv_est);
+  l_arv_se = arv_se ./ (arv_est .* (1 - arv_est));
+
 }
 parameters {
 
@@ -125,6 +138,9 @@ model {
 
   // prevalence likelihood
   l_prev_est ~ normal(l_rho_i[idx_prev], l_prev_se);
+
+  // survey ART coverage likelihood
+  l_arv_est ~ normal(l_alpha_i[idx_arv], l_arv_se);
 
   // ART data likelihood
   target += log(prop_art_i) - log1m(alpha_i); // propart -> l_alpha
