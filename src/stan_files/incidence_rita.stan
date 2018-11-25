@@ -19,8 +19,8 @@ data {
   // recent infection testing
   int Nobs_rec;
   int idx_rec[Nobs_rec];
-  int P_i[Nobs_rec];
-  int R_i[Nobs_rec];
+  vector[Nobs_rec] P_i;
+  vector[Nobs_rec] R_i;
 
   //
   real OmegaT0;
@@ -152,11 +152,12 @@ model {
 
   kappa_i = exp(Xkappa * kappa + log1m(omega*alpha_i) + u_i);
   pR =  kappa_i .* (1-rho_i) * (OmegaT - betaT*T) + betaT;
-  R_i ~ binomial(P_i, pR[idx_rec]);
+  target += R_i .* log(pR[idx_rec]) + (P_i - R_i) .* log1m(pR[idx_rec]); // binomial
+
 }
 generated quantities {
   vector[N_reg] lambda_i;
-  vector[N_reg]  infections_i;
+  vector[N_reg] infections_i;
   vector[N_reg] excess_i;
   real infections;
   real rho;
